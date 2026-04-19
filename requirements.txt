@@ -1,7 +1,7 @@
-streamlit
-gensim
-pandas
-numpy
-scipy
-scikit-learn
-matplotlib
+streamlit==1.33.0
+gensim==4.3.2
+pandas==2.2.2
+numpy==1.26.4
+scipy==1.11.4
+scikit-learn==1.4.2
+matplotlib==3.8.4
