@@ -6,84 +6,64 @@ import pandas as pd
 # Page Config
 # -------------------------------
 st.set_page_config(
-    page_title="Word2Vec Explorer",
-    page_icon="🧠",
-    layout="wide"
+    page_title="Word2Vec App",
+    layout="centered"
 )
 
-st.title("🧠 Word2Vec Semantic Similarity App")
+st.title("Word Similarity App")
 
 # -------------------------------
-# Load Word2Vec Model (Cached)
+# Load Model (SAFE + CONTROLLED)
 # -------------------------------
 @st.cache_resource
 def load_model():
-    return api.load("word2vec-google-news-300")
-
-wv = load_model()
-
-st.success("Word2Vec model loaded successfully!")
-
-# -------------------------------
-# Word Similarity Section
-# -------------------------------
-st.header("🔍 Check Word Similarity")
-
-col1, col2 = st.columns(2)
-
-with col1:
-    word1 = st.text_input("Enter first word", "great")
-
-with col2:
-    word2 = st.text_input("Enter second word", "good")
-
-if st.button("Compute Similarity"):
-    try:
-        similarity = wv.similarity(word1, word2)
-        st.metric("Similarity Score", f"{similarity:.4f}")
-    except KeyError:
-        st.error("One or both words not in vocabulary!")
-
-# -------------------------------
-# Similar Words Section
-# -------------------------------
-st.header("📌 Find Similar Words")
-
-input_word = st.text_input("Enter a word to find similar words", "king")
-
-if st.button("Get Similar Words"):
-    try:
-        similar_words = wv.most_similar(input_word, topn=10)
-        st.write("Top similar words:")
-        for word, score in similar_words:
-            st.write(f"{word} → {score:.4f}")
-    except KeyError:
-        st.error("Word not found in vocabulary!")
-
-# -------------------------------
-# Dataset Section
-# -------------------------------
-st.header("📰 Dataset Viewer")
-
-@st.cache_data
-def load_data():
-    return pd.read_csv("fake_and_real_news.csv")
+    return api.load("glove-wiki-gigaword-50")  # even smaller → safer
 
 try:
-    df = load_data()
+    model = load_model()
+except Exception as e:
+    st.error("Model failed to load. Try refreshing.")
+    st.stop()
 
-    st.write("Dataset Shape:", df.shape)
-    st.dataframe(df.head())
-
-except FileNotFoundError:
-    st.warning("Dataset file 'fake_and_real_news.csv' not found. Please upload it.")
+st.success("Model loaded successfully!")
 
 # -------------------------------
-# Upload Option
+# Similarity Section
 # -------------------------------
-uploaded_file = st.file_uploader("Upload your CSV file", type=["csv"])
+st.subheader("Check Similarity")
 
-if uploaded_file:
-    df = pd.read_csv(uploaded_file)
-    st.write("Uploaded Dataset Shape:", df.shape)
-    st.dataframe(df.head())
+word1 = st.text_input("Word 1", "good")
+word2 = st.text_input("Word 2", "great")
+
+if st.button("Compare"):
+    try:
+        score = model.similarity(word1, word2)
+        st.write(f"Similarity Score: {score:.4f}")
+    except:
+        st.error("Word not found in vocabulary")
+
+# -------------------------------
+# Similar Words
+# -------------------------------
+st.subheader("Find Similar Words")
+
+word = st.text_input("Enter word", "king")
+
+if st.button("Find"):
+    try:
+        results = model.most_similar(word, topn=5)
+        for w, s in results:
+            st.write(f"{w} → {s:.4f}")
+    except:
+        st.error("Word not found")
+
+# -------------------------------
+# Dataset Upload (SAFE)
+# -------------------------------
+st.subheader("Upload Dataset")
+
+file = st.file_uploader("Upload CSV", type=["csv"])
+
+if file:
+    df = pd.read_csv(file)
+    st.write(df.head())
